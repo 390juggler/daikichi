@@ -27,7 +27,7 @@
     #result-section {
       display: none;
     }
-    /* 最初の画面だけ表示 */
+    /* 最初は initial-section を表示 */
     #initial-section {
       display: block;
       margin-top: 20px;
@@ -84,39 +84,41 @@
       background: #8c3e15;
     }
 
-    /* おみくじ結果をキャプチャするラッパ要素 */
+    /* おみくじ結果をキャプチャする要素
+       1920:1080 と同じ 16:9 比率で、ここでは 960×540 に */
     #capture-area {
-      display: inline-flex;       /* 横幅に合わせて縮むようにする */
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      width: 960px;       /* 横長に設定 */
+      height: 540px;      /* 16:9 の比率 */
       background: #fff;
-      border: 6px solid #153f74;  /* 紺色の枠 */
-      padding: 10px;
-      /* 余白少なめ & 自動で高さ可変 */
+      border: 6px solid #153f74; /* 紺色の枠 */
       box-sizing: border-box;
-      max-width: 500px;        /* 幅を小さめにして、文字が詰まりやすいように */
-      margin: 0 auto;
+      margin: 0 auto;             /* 中央寄せ */
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 10px;
     }
 
-    /* 大吉、メッセージ、開運の順に配置 */
+    /* 大吉、メッセージ、開運の配置 */
     #fortune {
-      color: #ef5411;          /* オレンジ寄りの赤 */
+      color: #ef5411;          
       font-size: 7rem;         
       margin: 10px 0;
       line-height: 1;
     }
 
     #message {
-      /* 文字数が増えても自動改行 & 余白を詰めるための指定 */
       white-space: pre-wrap;
       word-break: break-word;
       font-size: 1.4rem;
       color: #153f74;
-      line-height: 3.3;
+      line-height: 3.3; 
       margin: 10px 0;
       text-align: center;
-      max-width: 90%;    /* 枠内に収める */
+      max-width: 90%;
     }
 
     .omikuji-footer {
@@ -130,10 +132,15 @@
       margin-bottom: 20px;
     }
 
-    /* 生成した画像の表示サイズを小さめに */
+    /* 生成した画像の表示を小さめに */
     #preview-container img {
-      max-width: 800px;   /* ページ内でのプレビュー幅 */
+      max-width: 600px;  /* ページ内でのプレビューはこのくらいに縮小 */
       border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    /* ボタン類を配置するコンテナ */
+    #buttons-container {
       margin-top: 10px;
     }
   </style>
@@ -156,21 +163,21 @@
 
   <!-- 結果表示 & 画像プレビュー -->
   <div id="result-section">
-    <!-- おみくじの結果をキャプチャする領域 -->
+    <!-- おみくじの結果（16:9比率で 960×540） -->
     <div id="capture-area">
       <div id="fortune">大吉</div>
       <div id="message"></div>
       <div class="omikuji-footer">開運</div>
     </div>
 
-    <!-- ボタンを結果の近くに -->
-    <div>
-      <button id="makeImageButton">画像作成</button>
-      <button id="retryButton">もう一度引く</button>
-    </div>
-
     <!-- 生成した画像を表示する部分 -->
     <div id="preview-container"></div>
+
+    <!-- ボタン類（ツイート＆もう一度引く） -->
+    <div id="buttons-container">
+      <button id="tweetButton">ツイート</button>
+      <button id="retryButton">もう一度引く</button>
+    </div>
   </div>
 
   <!-- html2canvas ライブラリ -->
@@ -183,32 +190,32 @@
     const omikujiImage = document.getElementById('omikujiImage');
     const fortuneEl = document.getElementById('fortune');
     const messageEl = document.getElementById('message');
-    const makeImageButton = document.getElementById('makeImageButton');
-    const retryButton = document.getElementById('retryButton');
     const previewContainer = document.getElementById('preview-container');
+    const tweetButton = document.getElementById('tweetButton');
+    const retryButton = document.getElementById('retryButton');
 
-    // 大吉メッセージ（文字数が多めでもOK。自動改行させる）
+    // 大吉メッセージ
     const daikichiMessages = [
       "助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも（もちろん非課税）！",
       "急に流行ったゲームで隠されすぎた才能が発覚、世界の脚光を浴びるかも。ひょっとしたらeスポーツで億万長者に！？",
       "かわいいは正義すぎて、あなたの笑顔だけで世界中の紛争が終結し、ノーベル平和賞を受賞するかも。すごすぎる！",
       "常に逆かえる化現象が発生してモテモテになる“謎のギフト”を与えられるかも。誰もがあなたに惚れちゃう！",
-      "実はあなたの不運がちょっと多すぎるバグが発覚し、運営から詑(わ)び幸運と情報アップデートが無限に提供されるかも…？",
-      "去年何気なく書いたメモが史上最高のビジネスプランとして認定され、各界の投資家から資金が殺到するかも！",
+      "実はあなたの不運が多すぎるバグが発覚し、運営から詑(わ)び幸運とアップデートが無限に提供されるかも…？",
+      "去年何気なく書いたメモが史上最高のビジネスプランとして認定され、各界投資家から資金が殺到するかも！",
       "どんな宝くじを買っても連続で当せんし、人生が秒で激変してしまうかも。笑いが止まりません！",
       "ふと書いたブログ記事が絶大な反響を呼び、新たなムーブメントの火付け役として世界に名を轟かせるかも…！",
-      "絵が苦手と思いきや、世界的大画家の才能を秘めていることが判明し、オークションで億単位の落札が続出するかも！",
-      "食べるだけで周囲に幸せオーラが出る魔法の胃袋をゲット！ついでに何を食べてもゼロカロリーかも！？",
-      "部屋の掃除をしただけで開運パワーが炸裂し、行く先々で奇跡が起こりまくるかも！",
-      "何気なく口ずさんだ鼻歌が海外で大流行し、各国語のカバーアルバムが次々発売されるかも。印税生活へ…！",
-      "近所の神社にお参りしたら、神様が個人的にあなたを推してくれるようになり、どんどん良いことが起こりそう！",
-      "出かけた先で衝撃の運命的出会いがあり、一瞬で恋と仕事と財産がすべて手に入りそう。なんという神展開！",
+      "絵が苦手と思いきや、世界的大画家の才能を秘めていると判明し、オークションで億単位の落札が続出するかも！",
+      "食べるだけで周囲に幸せオーラが出る魔法の胃袋をゲット！何を食べてもゼロカロリーかも！？",
+      "何気なく口ずさんだ鼻歌が海外で大流行、各国語のカバーアルバムが次々発売され印税生活まっしぐら！",
+      "近所の神社にお参りしたら、神様が個人的にあなたを推してくれるようになり、奇跡が起こりまくるかも！",
+      "出かけた先で運命的出会いがあり、一瞬で恋も財産も手に入りそう。なんという神展開！",
       "SNSに投稿した写真が史上最大のバズを記録し、超VIPから直接スカウトされ億単位のオファーが来るかも！"
     ];
 
     // おみくじ箱クリック → シェイク → 振っている画面 → 結果表示
     omikujiImage.addEventListener('click', () => {
       omikujiImage.classList.add('shakeLR');
+      // 1秒後に振ってる画面へ
       setTimeout(() => {
         initialSection.style.display = 'none';
         omikujiSection.style.display = 'block';
@@ -216,35 +223,41 @@
       }, 1000);
 
       // さらに2秒後(合計3秒後)に結果表示
-      setTimeout(() => {
+      setTimeout(async () => {
         omikujiSection.style.display = 'none';
         resultSection.style.display = 'block';
-        
+
+        // ランダムにメッセージを設定
         fortuneEl.textContent = "大吉";
         const idx = Math.floor(Math.random() * daikichiMessages.length);
         messageEl.textContent = daikichiMessages[idx];
+
+        // 結果が表示されたら、自動的にhtml2canvasで画像生成 → 画面表示
+        const captureArea = document.getElementById('capture-area');
+        const canvas = await html2canvas(captureArea);
+        const dataUrl = canvas.toDataURL("image/png");
+
+        // プレビューを表示
+        const newImg = document.createElement('img');
+        newImg.src = dataUrl;
+        previewContainer.innerHTML = "";
+        previewContainer.appendChild(newImg);
+
       }, 3000);
     });
 
-    // 画像作成ボタン → html2canvasでキャプチャし、ページ内に表示
-    makeImageButton.addEventListener('click', () => {
-      const captureArea = document.getElementById('capture-area');
-      html2canvas(captureArea).then(canvas => {
-        // 生成した画像をページに表示
-        const dataUrl = canvas.toDataURL("image/png");
-        const newImg = document.createElement('img');
-        newImg.src = dataUrl;
-        // すでにプレビューがあれば消す
-        previewContainer.innerHTML = "";
-        previewContainer.appendChild(newImg);
-      });
+    // ツイートボタン（テキストのみ）
+    tweetButton.addEventListener('click', () => {
+      const text = `【大吉】\n${messageEl.textContent}\n`;
+      const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
+      window.open(tweetUrl, "_blank");
     });
 
     // もう一度引く
     retryButton.addEventListener('click', () => {
       resultSection.style.display = 'none';
       initialSection.style.display = 'block';
-      previewContainer.innerHTML = "";
+      previewContainer.innerHTML = ""; // プレビューをクリア
     });
   </script>
 </body>
