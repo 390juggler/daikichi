@@ -2,18 +2,18 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>おみくじ</title>
+  <title>大吉おみくじ</title>
   <!-- Google Fonts: Sawarabi Mincho（和風っぽさ） -->
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho:wght@700&display=swap" rel="stylesheet">
 
   <style>
     html, body {
-      margin: 0; 
-      padding: 0; 
-      background: #f2f2f2; 
+      margin: 0;
+      padding: 0;
+      background: #f2f2f2;
       font-family: 'Sawarabi Mincho', sans-serif;
-      text-align: center; 
+      text-align: center;
       color: #3b1a1a;
     }
     h1 {
@@ -21,13 +21,13 @@
       font-size: 2.5rem;
     }
 
-    /* 画面の切り替え用 */
+    /* セクション切り替え */
     #initial-section, 
     #omikuji-section, 
     #result-section {
       display: none;
     }
-    /* ロード時は最初のみ表示 */
+    /* 最初の画面だけ表示 */
     #initial-section {
       display: block;
       margin-top: 20px;
@@ -43,7 +43,7 @@
       transform: scale(1.05);
     }
 
-    /* 振ってる最中の箱 */
+    /* おみくじ振るアニメ */
     #omikujiShakeImage {
       width: 200px;
       animation: shakeUD 2s ease-in-out;
@@ -55,7 +55,6 @@
       75%  { transform: translateY(10px);  }
       100% { transform: translateY(0);   }
     }
-
     /* クリック時の左右シェイク */
     .shakeLR {
       animation: shakeLR 0.4s ease-in-out;
@@ -72,8 +71,8 @@
     button {
       font-family: 'Sawarabi Mincho', sans-serif;
       font-weight: 700;
-      font-size: 0.9rem;
-      padding: 6px 12px;
+      font-size: 1rem;
+      padding: 8px 16px;
       border: none;
       background: #b85c2b;
       color: #fff;
@@ -85,61 +84,58 @@
       background: #8c3e15;
     }
 
-    /* ここが 1920×1080 の枠になる */
+    /* おみくじ結果をキャプチャするラッパ要素 */
     #capture-area {
-      width: 1920px;
-      height: 1080px;
-      background: #fff;
-      border: 20px solid #153f74; /* 紺色の太枠 */
-      box-sizing: border-box;
-
-      display: flex;
+      display: inline-flex;       /* 横幅に合わせて縮むようにする */
       flex-direction: column;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      position: relative;
-      margin: 0 auto;    /* 画面中央寄せ（横スクロールする場合あり）*/
+      background: #fff;
+      border: 6px solid #153f74;  /* 紺色の枠 */
+      padding: 10px;
+      /* 余白少なめ & 自動で高さ可変 */
+      box-sizing: border-box;
+      max-width: 500px;        /* 幅を小さめにして、文字が詰まりやすいように */
+      margin: 0 auto;
     }
 
-    /* タイトル（大吉） */
+    /* 大吉、メッセージ、開運の順に配置 */
     #fortune {
-      color: #ef5411;
-      font-size: 10rem;   
-      margin-top: 20px;
-      margin-bottom: 5px;
+      color: #ef5411;          /* オレンジ寄りの赤 */
+      font-size: 7rem;         
+      margin: 10px 0;
       line-height: 1;
     }
 
-    /* メッセージ部分 */
     #message {
-      flex: 1;           
-      width: 80%;
-      margin: 0 auto;
-      font-size: 2.5rem; 
-      color: #153f74;    
-      line-height: 1.4;  
-      overflow-y: auto;  
+      /* 文字数が増えても自動改行 & 余白を詰めるための指定 */
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 1.4rem;
+      color: #153f74;
+      line-height: 3.3;
+      margin: 10px 0;
       text-align: center;
+      max-width: 90%;    /* 枠内に収める */
     }
 
     .omikuji-footer {
       color: #153f74;
-      font-size: 5rem;
+      font-size: 4rem;
+      margin: 10px 0;
+    }
+
+    /* 結果画面 */
+    #result-section {
       margin-bottom: 20px;
     }
 
-    /* 結果下部にボタン類＆画像プレビューを配置 */
-    #result-buttons {
-      margin: 20px auto;
-    }
-    #image-preview {
-      margin: 10px auto 30px;
-    }
-    #image-preview img {
-      max-width: 600px;   /* プレビューの表示サイズを控えめに */
+    /* 生成した画像の表示サイズを小さめに */
+    #preview-container img {
+      max-width: 800px;   /* ページ内でのプレビュー幅 */
       border: 1px solid #ccc;
+      margin-top: 10px;
     }
-
   </style>
 </head>
 <body>
@@ -152,71 +148,34 @@
     <img id="omikujiImage" src="omikuji.png" alt="おみくじ箱">
   </div>
 
-  <!-- 振っている画面 -->
+  <!-- 振っている最中の画面 -->
   <div id="omikuji-section">
     <img id="omikujiShakeImage" src="omikuji.png" alt="振っているおみくじ箱">
     <p>おみくじを振っています…</p>
   </div>
 
-  <!-- 結果画面 -->
+  <!-- 結果表示 & 画像プレビュー -->
   <div id="result-section">
-
-    <!-- 1920x1080のおみくじ領域 -->
+    <!-- おみくじの結果をキャプチャする領域 -->
     <div id="capture-area">
       <div id="fortune">大吉</div>
       <div id="message"></div>
       <div class="omikuji-footer">開運</div>
     </div>
 
-    <!-- ボタンとプレビュー画像をまとめて近くに配置 -->
-    <div id="result-buttons">
-      <button id="makeImageButton">画像プレビュー</button>
-      <button id="tweetButton">ツイートする</button>
+    <!-- ボタンを結果の近くに -->
+    <div>
+      <button id="makeImageButton">画像作成</button>
       <button id="retryButton">もう一度引く</button>
     </div>
 
-    <!-- ここに生成した画像を表示してユーザーが保存できるようにする -->
-    <div id="image-preview"></div>
-
+    <!-- 生成した画像を表示する部分 -->
+    <div id="preview-container"></div>
   </div>
 
   <!-- html2canvas ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    // 大吉メッセージ 30種
-    const daikichiMessages = [
-      "助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも（もちろん非課税）！",
-      "全ての食べたものがゼロカロリーになり（しかも栄養失調にはならない）一生太らないかも！",
-      "実はすべての不幸をこっそり解決する影武者がいて、あなたに残る試練は成長のためのものだけかも！",
-      "あなたブームが実は来ていて、待ち人が35億人も押し寄せてくるかも（ただしみんな奥手）！",
-      "道端でくしゃみした拍子に次元の裂け目が開いてしまい、そこから富と幸運が湧き出てくるかも！",
-      "ご近所さんがこっそりあなただけに極秘の稼ぎ方を伝授してくれて、一生働かなくても平気になるかも！",
-      "急に流行ったゲームで隠されすぎた才能が発覚、世界の脚光を浴びるかも。",
-      "ただただ幸せになるかも。",
-      "今年は血液型占いと星座占いが全部一位かも。",
-      "なんと毎日”明日はもっといい日になる”かも。へけ。",
-      "今年のブームが”自分”になることが確定するかも",
-      "なにも転生してないのに急になろう系主人公みたいな理不尽な幸福しか起きなくなるかも。",
-      "”全てを手に入れる”かも",
-      "朝起きたら、急に世界中の人々から「あなた最高！」と崇められる天才的スターになっているかも！",
-      "昔の自分から突然手紙が届き、そこに書いてある宝の地図が本物で人生逆転するかも！",
-      "新発売のお菓子に大当たり券が入っていて、一生分の豪華グルメを無料で楽しめちゃうかも！",
-      "かわいいは正義すぎて、あなたの笑顔だけで世界中の紛争が終結し、ノーベル平和賞を受賞するかも！",
-      "常に逆かえる化現象が発生してモテモテになる”ギフト”が授けられるかも！！",
-      "自分の出したゴミが全部、実は未来の超レアアイテムと判明し、タイムトラベラーに高額で買い取られるかも！",
-      "あなたの名前が入った曲が大ブレイクし、なぜか印税が毎年入ってきて不労所得でうはうはになるかも！",
-      "今年やった異形で2040年の新札の顔になることが内定するかも！",
-      "宝くじに当たった生き別れの兄弟が「実は僕たち兄弟なんだ」って言いに来てくれ、一生遊んで暮らせるかも！",
-      "ソファーでゴロゴロしていたら、どこかの大富豪が「そのリラックス術を学びたい」と大金を払ってくれるかも！",
-      "一瞬だけ集中しただけで“第八感”に目覚め、なんでも先回りして最強に効率的な人生を歩めるかも！",
-      "自宅の裏をちょっと掘ったら温泉が湧き出して、一気に温泉旅館オーナーになって大繁盛するかも！",
-      "実はあなたの不運がちょっと多すぎるバグが発覚し、運営から詑(わ)び幸運とこれからの人生の情報アップデートが提供されるかも。",
-      "信号待ちをしていたら、世界的プロデューサーに「今すぐ主演でデビューして！」とスカウトされるかも！",
-      "何気なく口ずさんだ鼻歌が次世代の国歌に採用され、一気に億万長者＆歴史的作曲家の仲間入りをするかも！",
-      "たまたま撮った自撮りが謎の国の王族に見初められ、「ぜひ王家を継いでください」と直々に依頼されるかも！",
-      "すれ違った鳩が突然妖精に変身し、あなたにしか見えない魔法世界への鍵をそっと手渡してくれるかも！"
-    ];
-
     const initialSection = document.getElementById('initial-section');
     const omikujiSection = document.getElementById('omikuji-section');
     const resultSection = document.getElementById('result-section');
@@ -224,13 +183,30 @@
     const omikujiImage = document.getElementById('omikujiImage');
     const fortuneEl = document.getElementById('fortune');
     const messageEl = document.getElementById('message');
-
     const makeImageButton = document.getElementById('makeImageButton');
-    const tweetButton = document.getElementById('tweetButton');
     const retryButton = document.getElementById('retryButton');
-    const imagePreviewDiv = document.getElementById('image-preview');
+    const previewContainer = document.getElementById('preview-container');
 
-    // おみくじ箱をクリック → 軽く左右にシェイク → 振っている画面へ
+    // 大吉メッセージ（文字数が多めでもOK。自動改行させる）
+    const daikichiMessages = [
+      "助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも（もちろん非課税）！",
+      "急に流行ったゲームで隠されすぎた才能が発覚、世界の脚光を浴びるかも。ひょっとしたらeスポーツで億万長者に！？",
+      "かわいいは正義すぎて、あなたの笑顔だけで世界中の紛争が終結し、ノーベル平和賞を受賞するかも。すごすぎる！",
+      "常に逆かえる化現象が発生してモテモテになる“謎のギフト”を与えられるかも。誰もがあなたに惚れちゃう！",
+      "実はあなたの不運がちょっと多すぎるバグが発覚し、運営から詑(わ)び幸運と情報アップデートが無限に提供されるかも…？",
+      "去年何気なく書いたメモが史上最高のビジネスプランとして認定され、各界の投資家から資金が殺到するかも！",
+      "どんな宝くじを買っても連続で当せんし、人生が秒で激変してしまうかも。笑いが止まりません！",
+      "ふと書いたブログ記事が絶大な反響を呼び、新たなムーブメントの火付け役として世界に名を轟かせるかも…！",
+      "絵が苦手と思いきや、世界的大画家の才能を秘めていることが判明し、オークションで億単位の落札が続出するかも！",
+      "食べるだけで周囲に幸せオーラが出る魔法の胃袋をゲット！ついでに何を食べてもゼロカロリーかも！？",
+      "部屋の掃除をしただけで開運パワーが炸裂し、行く先々で奇跡が起こりまくるかも！",
+      "何気なく口ずさんだ鼻歌が海外で大流行し、各国語のカバーアルバムが次々発売されるかも。印税生活へ…！",
+      "近所の神社にお参りしたら、神様が個人的にあなたを推してくれるようになり、どんどん良いことが起こりそう！",
+      "出かけた先で衝撃の運命的出会いがあり、一瞬で恋と仕事と財産がすべて手に入りそう。なんという神展開！",
+      "SNSに投稿した写真が史上最大のバズを記録し、超VIPから直接スカウトされ億単位のオファーが来るかも！"
+    ];
+
+    // おみくじ箱クリック → シェイク → 振っている画面 → 結果表示
     omikujiImage.addEventListener('click', () => {
       omikujiImage.classList.add('shakeLR');
       setTimeout(() => {
@@ -239,45 +215,36 @@
         omikujiImage.classList.remove('shakeLR');
       }, 1000);
 
-      // 2秒後(合計3秒後)に結果表示
+      // さらに2秒後(合計3秒後)に結果表示
       setTimeout(() => {
         omikujiSection.style.display = 'none';
         resultSection.style.display = 'block';
-
+        
         fortuneEl.textContent = "大吉";
         const idx = Math.floor(Math.random() * daikichiMessages.length);
         messageEl.textContent = daikichiMessages[idx];
       }, 3000);
     });
 
-    // 画像プレビュー （保存ではなくページ内に表示）
+    // 画像作成ボタン → html2canvasでキャプチャし、ページ内に表示
     makeImageButton.addEventListener('click', () => {
       const captureArea = document.getElementById('capture-area');
       html2canvas(captureArea).then(canvas => {
-        // データURL化して <img> タグに設定
+        // 生成した画像をページに表示
         const dataUrl = canvas.toDataURL("image/png");
         const newImg = document.createElement('img');
         newImg.src = dataUrl;
-
-        // 既にプレビューがあったら消して再表示
-        imagePreviewDiv.innerHTML = '';
-        imagePreviewDiv.appendChild(newImg);
+        // すでにプレビューがあれば消す
+        previewContainer.innerHTML = "";
+        previewContainer.appendChild(newImg);
       });
-    });
-
-    // ツイート (テキストのみ)
-    tweetButton.addEventListener('click', () => {
-      const text = `【大吉】\n${messageEl.textContent}\n`;
-      const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
-      window.open(tweetUrl, "_blank");
     });
 
     // もう一度引く
     retryButton.addEventListener('click', () => {
       resultSection.style.display = 'none';
       initialSection.style.display = 'block';
-      // プレビューをクリア
-      imagePreviewDiv.innerHTML = '';
+      previewContainer.innerHTML = "";
     });
   </script>
 </body>
