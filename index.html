@@ -2,51 +2,117 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>おみくじ</title>
-  <!-- Google Fonts: Sawarabi Mincho（和風っぽい雰囲気用） -->
+  <title>大吉おみくじスタイル</title>
+  <!-- Google Fonts: Sawarabi Mincho（和風っぽさ） -->
   <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho:wght@700&display=swap" rel="stylesheet">
 
   <style>
+    /* 全体設定 */
     body {
       margin: 0;
-      padding: 40px;
+      padding: 20px;
       text-align: center;
-      background: #fdfdf0;
+      background: #fdfdf0; /* 薄い和風の背景色 */
       font-family: 'Sawarabi Mincho', sans-serif;
+      color: #3b1a1a; 
     }
-
     h1 {
-      font-size: 2rem;
       margin-bottom: 20px;
-      color: #3b1a1a;
+      font-size: 2rem;
     }
 
-    /* セクション切り替え用 */
-    #initial-section,
-    #omikuji-section,
-    #result-section {
+    /* セクション切り替え */
+    #initial-section, #omikuji-section, #result-section {
       display: none;
     }
-    /* ページ読み込み時は最初の画面だけ表示 */
+    /* ロード時は最初の画面だけ表示 */
     #initial-section {
       display: block;
     }
 
-    /* 最初に表示するおみくじ画像 */
+    /* 1920x1080のキャプチャ領域 */
+    #capture-area {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      margin: 0 auto;  /* 中央寄せ */
+      background: #fdfdf0; /* 背景色 */
+      overflow: hidden; /* はみ出し防止 */
+      border: 2px solid #ccc; /* 見やすいように外枠 */
+    }
+
+    /* おみくじの枠（中央に配置） */
+    .omikuji-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 900px;
+      border: 20px solid #153f74; /* 紺色の太枠 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+    }
+
+    /* 大吉などの大きい文字（上部） */
+    .omikuji-title {
+      color: #ef5411; /* オレンジっぽい色 */
+      font-size: 6rem;
+      margin: 20px 0 0;
+      line-height: 1;
+    }
+
+    /* “開運”文字（下部） */
+    .omikuji-footer {
+      color: #153f74; /* 紺色 */
+      font-size: 3rem;
+      margin: 0 0 20px;
+    }
+
+    /* メッセージ部分（中段） */
+    .omikuji-message {
+      flex: 1;              /* 縦方向に隙間を埋める */
+      margin: 10px 20px;
+      color: #153f74;       /* 紺色 */
+      font-size: 1.6rem;
+      text-align: center;
+      line-height: 1.4;
+      overflow-y: auto;     /* オーバーフローでスクロール */
+    }
+
+    /* ボタン類 */
+    button {
+      font-family: 'Sawarabi Mincho', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 10px 20px;
+      border: none;
+      background: #b85c2b;
+      color: #fff;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #8c3e15;
+    }
+
+    /* 最初に出すおみくじ箱画像 */
     #omikujiImage {
       cursor: pointer;
-      width: 200px;
-      max-width: 80%;
+      width: 300px;
       transition: transform 0.2s ease;
     }
-    /* ホバーでちょっと拡大 */
     #omikujiImage:hover {
       transform: scale(1.05);
     }
 
-    /* クリック時にちょっとだけ左右に揺らすクラス */
-    .shake {
+    /* クリックしたときに軽くシェイク */
+    .shakeLR {
       animation: shakeLR 0.4s ease-in-out;
     }
     @keyframes shakeLR {
@@ -57,11 +123,9 @@
       100% { transform: translateX(0); }
     }
 
-    /* おみくじを振っている最中の画面（画像が上下に揺れる） */
+    /* 振ってる画面 (上下ゆれ) */
     #omikujiShakeImage {
-      width: 200px;
-      max-width: 80%;
-      /* 2秒かけて上下に揺れるアニメーション */
+      width: 300px;
       animation: shakeUD 2s ease-in-out;
     }
     @keyframes shakeUD {
@@ -71,55 +135,11 @@
       75%  { transform: translateY(15px);  }
       100% { transform: translateY(0);   }
     }
-
-    #omikuji-section p {
-      margin-top: 20px;
-      color: #3b1a1a;
-    }
-
-    /* 結果表示用 */
-    #result-container {
-      display: inline-block;
-      background: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    #fortune {
-      font-size: 2rem;
-      color: #d33;
-      margin: 20px 0 10px;
-    }
-    #message {
-      font-size: 1.2rem;
-      color: #333;
-      white-space: pre-wrap;
-      line-height: 1.6;
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    button {
-      font-size: 1rem;
-      padding: 10px 20px;
-      border: none;
-      background: #b85c2b;
-      color: #fff;
-      border-radius: 5px;
-      cursor: pointer;
-      margin: 15px 5px 0 5px;
-    }
-    button:hover {
-      background: #8c3e15;
-    }
   </style>
 </head>
 <body>
 
-  <h1>おみくじを引こう！</h1>
+  <h1>大吉おみくじ（和風スタイル）</h1>
 
   <!-- 最初の画面 -->
   <div id="initial-section">
@@ -127,7 +147,7 @@
     <img id="omikujiImage" src="omikuji.png" alt="おみくじの箱">
   </div>
 
-  <!-- おみくじを振っている最中の画面 -->
+  <!-- 振っている最中の画面 -->
   <div id="omikuji-section">
     <img id="omikujiShakeImage" src="omikuji.png" alt="振っているおみくじ箱">
     <p>おみくじを振っています…</p>
@@ -135,19 +155,24 @@
 
   <!-- 結果表示画面 -->
   <div id="result-section">
-    <div id="result-container">
-      <div id="fortune"></div>
-      <div id="message"></div>
+    <!-- ここを画像として保存する（1920x1080） -->
+    <div id="capture-area">
+      <div class="omikuji-wrapper">
+        <div class="omikuji-title" id="fortune">大吉</div>
+        <div class="omikuji-message" id="message"></div>
+        <div class="omikuji-footer">開運</div>
+      </div>
     </div>
+
     <button id="saveImageButton">画像として保存</button>
     <button id="tweetButton">ツイートする</button>
     <button id="retryButton">もう一度引く</button>
   </div>
 
-  <!-- html2canvas（画像保存用ライブラリ） -->
+  <!-- html2canvas: 画像保存用ライブラリ -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <script>
-    // 大吉メッセージの配列（合計30個）
+    // ここに30種類の大吉メッセージ
     const daikichiMessages = [
       "助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも（もちろん非課税）！",
       "全ての食べたものがゼロカロリーになり（しかも栄養失調にはならない）一生太らないかも！",
@@ -181,6 +206,7 @@
       "すれ違った鳩が突然妖精に変身し、あなたにしか見えない魔法世界への鍵をそっと手渡してくれるかも！"
     ];
 
+    // 要素取得
     const initialSection = document.getElementById('initial-section');
     const omikujiSection = document.getElementById('omikuji-section');
     const resultSection = document.getElementById('result-section');
@@ -188,25 +214,27 @@
     const fortuneEl = document.getElementById('fortune');
     const messageEl = document.getElementById('message');
 
-    // 画像をクリック → 最初に軽く左右に揺らしてから、振ってる画面へ移動
+    // おみくじ画像クリック
     omikujiImage.addEventListener('click', () => {
-      // クリック時に左右シェイク
-      omikujiImage.classList.add('shake');
+      // 軽く左右にシェイク
+      omikujiImage.classList.add('shakeLR');
 
-      // 1秒後に振ってる画面へ切り替え
+      // 1秒後に「振ってる画面」へ
       setTimeout(() => {
-        initialSection.style.display = 'none'; // 最初の画面OFF
-        omikujiSection.style.display = 'block'; // 振っている画面ON
-        // シェイクのクラス外す
-        omikujiImage.classList.remove('shake');
+        initialSection.style.display = 'none';
+        omikujiSection.style.display = 'block';
+        // シェイク外す
+        omikujiImage.classList.remove('shakeLR');
       }, 1000);
 
-      // さらに2秒後に結果表示
-      // （合計3秒後に結果が出るイメージ）
+      // さらに2秒後（合計3秒後）に結果画面を表示
       setTimeout(() => {
         omikujiSection.style.display = 'none';
         resultSection.style.display = 'block';
-        fortuneEl.textContent = '大吉'; // 固定で大吉
+
+        // 大吉固定
+        fortuneEl.textContent = '大吉';
+        // ランダムメッセージ
         const randIndex = Math.floor(Math.random() * daikichiMessages.length);
         messageEl.textContent = daikichiMessages[randIndex];
       }, 3000);
@@ -220,8 +248,8 @@
 
     // 画像として保存
     document.getElementById('saveImageButton').addEventListener('click', () => {
-      const resultContainer = document.getElementById('result-container');
-      html2canvas(resultContainer).then(canvas => {
+      const captureArea = document.getElementById('capture-area');
+      html2canvas(captureArea).then(canvas => {
         const dataUrl = canvas.toDataURL("image/png");
         const link = document.createElement("a");
         link.href = dataUrl;
@@ -230,13 +258,12 @@
       });
     });
 
-    // ツイートする
+    // ツイートする (画像添付はできずテキストのみ)
     document.getElementById('tweetButton').addEventListener('click', () => {
-      const textToTweet = `【大吉】\n${messageEl.textContent}\n`;
-      const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(textToTweet);
+      const text = `【大吉】\n${messageEl.textContent}\n`;
+      const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
       window.open(tweetUrl, "_blank");
     });
   </script>
-
 </body>
 </html>
