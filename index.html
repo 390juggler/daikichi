@@ -134,7 +134,7 @@
 </head>
 <body>
 
-  <h1>大吉おみくじ！！！！！！</h1>
+  <h1>大吉おみくじ（画像のみ表示）</h1>
 
   <!-- 初期画面 -->
   <div id="initial-section">
@@ -182,6 +182,11 @@
       // 全角「。」のあとに改行を入れる
       // 例: "今日は晴れ。明日は雨。" → "今日は晴れ。\n明日は雨。\n"
       return str.replace(/。/g, "。\n");
+    }
+
+      function autoLineBreak(str) {
+      // 全角「。」のあとに改行を入れる
+      // 例: "今日は晴れ。明日は雨。" → "今日は晴れ。\n明日は雨。\n"
       return str.replace(/、/g, "\n");
     }
 
@@ -221,7 +226,8 @@
         fortuneEl.textContent = "大吉";
         const idx = Math.floor(Math.random() * daikichiMessages.length);
         const rawMsg = daikichiMessages[idx];
-        const formattedMsg = autoLineBreak(rawMsg);
+        const formattedMsg2 = autoLineBreak(rawMsg);
+        const formattedMsg = autoLineBreak2(formattedMsg2);
         messageEl.textContent = formattedMsg;
 
         // キャプチャして画像化
