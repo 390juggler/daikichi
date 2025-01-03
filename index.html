@@ -8,28 +8,26 @@
   <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho:wght@700&display=swap" rel="stylesheet">
 
   <style>
-    /* 全体をシンプルにリセット */
     html, body {
-      margin: 0;
-      padding: 0;
-      background: #f2f2f2;
+      margin: 0; 
+      padding: 0; 
+      background: #f2f2f2; 
       font-family: 'Sawarabi Mincho', sans-serif;
-      text-align: center;
+      text-align: center; 
       color: #3b1a1a;
     }
-
     h1 {
       margin: 20px 0;
       font-size: 2.5rem;
     }
 
-    /* セクション切り替え */
+    /* 画面の切り替え用 */
     #initial-section, 
     #omikuji-section, 
     #result-section {
       display: none;
     }
-    /* 最初は initial-section を表示 */
+    /* ロード時は最初のみ表示 */
     #initial-section {
       display: block;
       margin-top: 20px;
@@ -45,7 +43,7 @@
       transform: scale(1.05);
     }
 
-    /* 振ってる最中の画像 */
+    /* 振ってる最中の箱 */
     #omikujiShakeImage {
       width: 200px;
       animation: shakeUD 2s ease-in-out;
@@ -58,7 +56,7 @@
       100% { transform: translateY(0);   }
     }
 
-    /* クリック時に左右に振動するアニメ */
+    /* クリック時の左右シェイク */
     .shakeLR {
       animation: shakeLR 0.4s ease-in-out;
     }
@@ -70,7 +68,7 @@
       100% { transform: translateX(0); }
     }
 
-    /* ボタンのスタイル */
+    /* ボタン */
     button {
       font-family: 'Sawarabi Mincho', sans-serif;
       font-weight: 700;
@@ -87,21 +85,8 @@
       background: #8c3e15;
     }
 
-    /* ここからキャプチャ対象:
-       画像としては 1920×1080 だが表示を縮小して全体を1画面に収める */
-    #capture-area-container {
-      /* これが実際の 1920×1080 領域を内包する */
-      position: relative;
-      width: 1920px;
-      height: 1080px;
-      margin: 8px auto; /* 画面中央寄せ */
-      transform: scale(0.6);   /* ここを変えると縮小率が変わる(0.4→約40%) */
-      transform-origin: top center;
-      /* scaleした時にはみ出しを隠すため overflow: hidden; は付けずにOK */
-    }
-
+    /* ここが 1920×1080 の枠になる */
     #capture-area {
-      /* 実際に出力される画像サイズは 1920×1080 */
       width: 1920px;
       height: 1080px;
       background: #fff;
@@ -113,40 +98,48 @@
       justify-content: space-between;
       align-items: center;
       position: relative;
+      margin: 0 auto;    /* 画面中央寄せ（横スクロールする場合あり）*/
     }
 
-    /* 大吉、メッセージ、開運の位置・サイズを小さめに */
+    /* タイトル（大吉） */
     #fortune {
       color: #ef5411;
-      font-size: 18rem;    /* 小さめに設定 */
+      font-size: 10rem;   
       margin-top: 20px;
       margin-bottom: 5px;
       line-height: 1;
     }
 
+    /* メッセージ部分 */
     #message {
-      flex: 1;           /* 上下の隙間を詰める */
+      flex: 1;           
       width: 80%;
       margin: 0 auto;
-      font-size: 5.1rem; /* 文字も小さめ */
+      font-size: 2.5rem; 
       color: #153f74;    
-      line-height: 2.4;  
+      line-height: 1.4;  
       overflow-y: auto;  
       text-align: center;
     }
 
     .omikuji-footer {
       color: #153f74;
-      font-size: 10rem;
-      margin-bottom: 10px;
+      font-size: 5rem;
+      margin-bottom: 20px;
     }
 
-    /* ステップ画面のレイアウト */
-    #initial-section p,
-    #omikuji-section p {
-      margin-top: 5px;
-      font-size: 0.9rem;
+    /* 結果下部にボタン類＆画像プレビューを配置 */
+    #result-buttons {
+      margin: 20px auto;
     }
+    #image-preview {
+      margin: 10px auto 30px;
+    }
+    #image-preview img {
+      max-width: 600px;   /* プレビューの表示サイズを控えめに */
+      border: 1px solid #ccc;
+    }
+
   </style>
 </head>
 <body>
@@ -167,20 +160,24 @@
 
   <!-- 結果画面 -->
   <div id="result-section">
-    <!-- 縮小表示用のラッパ -->
-    <div id="capture-area-container">
-      <!-- ここが実際に 1920×1080 の領域 -->
-      <div id="capture-area">
-        <div id="fortune">大吉</div>
-        <div id="message"></div>
-        <div class="omikuji-footer">開運</div>
-      </div>
+
+    <!-- 1920x1080のおみくじ領域 -->
+    <div id="capture-area">
+      <div id="fortune">大吉</div>
+      <div id="message"></div>
+      <div class="omikuji-footer">開運</div>
     </div>
 
-    <!-- ボタンたち -->
-    <button id="saveImageButton">画像として保存</button>
-    <button id="tweetButton">ツイートする</button>
-    <button id="retryButton">もう一度引く</button>
+    <!-- ボタンとプレビュー画像をまとめて近くに配置 -->
+    <div id="result-buttons">
+      <button id="makeImageButton">画像プレビュー</button>
+      <button id="tweetButton">ツイートする</button>
+      <button id="retryButton">もう一度引く</button>
+    </div>
+
+    <!-- ここに生成した画像を表示してユーザーが保存できるようにする -->
+    <div id="image-preview"></div>
+
   </div>
 
   <!-- html2canvas ライブラリ -->
@@ -220,25 +217,29 @@
       "すれ違った鳩が突然妖精に変身し、あなたにしか見えない魔法世界への鍵をそっと手渡してくれるかも！"
     ];
 
-    // DOM取得
     const initialSection = document.getElementById('initial-section');
     const omikujiSection = document.getElementById('omikuji-section');
     const resultSection = document.getElementById('result-section');
+
     const omikujiImage = document.getElementById('omikujiImage');
     const fortuneEl = document.getElementById('fortune');
     const messageEl = document.getElementById('message');
 
-    // おみくじ箱クリック → 左右にシェイク → 振る画面
+    const makeImageButton = document.getElementById('makeImageButton');
+    const tweetButton = document.getElementById('tweetButton');
+    const retryButton = document.getElementById('retryButton');
+    const imagePreviewDiv = document.getElementById('image-preview');
+
+    // おみくじ箱をクリック → 軽く左右にシェイク → 振っている画面へ
     omikujiImage.addEventListener('click', () => {
       omikujiImage.classList.add('shakeLR');
-
       setTimeout(() => {
         initialSection.style.display = 'none';
         omikujiSection.style.display = 'block';
         omikujiImage.classList.remove('shakeLR');
       }, 1000);
 
-      // さらに2秒後 (合計3秒後) に結果表示
+      // 2秒後(合計3秒後)に結果表示
       setTimeout(() => {
         omikujiSection.style.display = 'none';
         resultSection.style.display = 'block';
@@ -249,30 +250,34 @@
       }, 3000);
     });
 
-    // もう一度引く
-    document.getElementById('retryButton').addEventListener('click', () => {
-      resultSection.style.display = 'none';
-      initialSection.style.display = 'block';
-    });
-
-    // 画像として保存
-    document.getElementById('saveImageButton').addEventListener('click', () => {
+    // 画像プレビュー （保存ではなくページ内に表示）
+    makeImageButton.addEventListener('click', () => {
       const captureArea = document.getElementById('capture-area');
-      // html2canvasで 1920×1080 画像を生成
       html2canvas(captureArea).then(canvas => {
+        // データURL化して <img> タグに設定
         const dataUrl = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = "omikuji_result.png";
-        link.click();
+        const newImg = document.createElement('img');
+        newImg.src = dataUrl;
+
+        // 既にプレビューがあったら消して再表示
+        imagePreviewDiv.innerHTML = '';
+        imagePreviewDiv.appendChild(newImg);
       });
     });
 
-    // ツイート (画像添付はできず、テキストのみ)
-    document.getElementById('tweetButton').addEventListener('click', () => {
+    // ツイート (テキストのみ)
+    tweetButton.addEventListener('click', () => {
       const text = `【大吉】\n${messageEl.textContent}\n`;
       const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
       window.open(tweetUrl, "_blank");
+    });
+
+    // もう一度引く
+    retryButton.addEventListener('click', () => {
+      resultSection.style.display = 'none';
+      initialSection.style.display = 'block';
+      // プレビューをクリア
+      imagePreviewDiv.innerHTML = '';
     });
   </script>
 </body>
