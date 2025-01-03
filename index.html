@@ -2,10 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>大吉おみくじ（画像だけ）</title>
+  <title>大吉みくじ！！！</title>
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Sawarabi+Mincho:wght@700&display=swap" rel="stylesheet">
-
   <style>
     html, body {
       margin: 0;
@@ -20,13 +19,13 @@
       font-size: 2rem;
     }
 
-    /* 遷移用のセクション */
+    /* セクション切り替え */
     #initial-section,
     #omikuji-section,
     #result-section {
       display: none;
     }
-    /* 最初は initial-section を表示 */
+    /* 最初だけ表示 */
     #initial-section {
       display: block;
     }
@@ -41,7 +40,7 @@
       transform: scale(1.05);
     }
 
-    /* クリック時に左右にシェイク */
+    /* クリック時の左右シェイク */
     .shakeLR {
       animation: shakeLR 0.4s ease-in-out;
     }
@@ -53,7 +52,7 @@
       100% { transform: translateX(0); }
     }
 
-    /* おみくじ振るアニメ (上下) */
+    /* 振ってる最中 (上下シェイク) */
     #omikujiShakeImage {
       width: 200px;
       animation: shakeUD 2s ease-in-out;
@@ -83,22 +82,22 @@
       background: #8c3e15;
     }
 
-    /* 結果画面で表示する画像プレビュー */
+    /* 結果画像プレビュー */
     #preview-container img {
-      max-width: 600px; /* プレビュー用に縮小 */
+      max-width: 600px;
       border: 1px solid #ccc;
       margin-top: 20px;
     }
 
-    /* おみくじ結果を作るエリア (ユーザーに見せない) */
+    /* おみくじ合成エリア（画面外） */
     #capture-area {
       position: absolute;
       left: -9999px;  /* 画面外に飛ばす */
       top: 0;
-      width: 960px;   /* 16:9 横長：1920×1080の縮小版 */
+      width: 960px;   /* 16:9 (1920x1080の縮小版) */
       height: 540px;
       background: #fff;
-      border: 6px solid #153f74; 
+      border: 6px solid #153f74;
       box-sizing: border-box;
       padding: 10px;
 
@@ -108,19 +107,19 @@
       justify-content: center;
     }
 
-    /* 大吉・メッセージ・開運 */
+    /* 大吉、メッセージ、開運 */
     #fortune {
-      color: #ef5411;          
-      font-size: 9rem;         
+      color: #ef5411;
+      font-size: 10rem;
       margin: 10px 0;
       line-height: 1;
     }
     #message {
       white-space: pre-wrap;
       word-break: break-word;
-      font-size: 2.0rem;
+      font-size: 2.4rem;
       color: #153f74;
-      line-height: 3.3; 
+      line-height: 3.3;
       margin: 10px 0;
       text-align: center;
       max-width: 90%;
@@ -130,11 +129,12 @@
       font-size: 4rem;
       margin: 10px 0;
     }
+
   </style>
 </head>
 <body>
 
-  <h1>大吉おみくじ！！！！！！！！！！！</h1>
+  <h1>大吉みくじ！！！</h1>
 
   <!-- 初期画面 -->
   <div id="initial-section">
@@ -142,21 +142,20 @@
     <img id="omikujiImage" src="omikuji.png" alt="おみくじ箱">
   </div>
 
-  <!-- 振っている最中の画面 -->
+  <!-- 振っている画面 -->
   <div id="omikuji-section">
     <img id="omikujiShakeImage" src="omikuji.png" alt="振っているおみくじ箱">
     <p>おみくじを振っています…</p>
   </div>
 
-  <!-- 結果画面：画像だけプレビュー -->
+  <!-- 結果（画像プレビューのみ） -->
   <div id="result-section">
     <div id="preview-container"></div>
-    <!-- ツイートボタン＆リトライボタン -->
     <button id="tweetButton">ツイート</button>
     <button id="retryButton">もう一度引く</button>
   </div>
 
-  <!-- ここに「大吉」「メッセージ」「開運」を合成 -->
+  <!-- キャプチャ用エリア (非表示) -->
   <div id="capture-area">
     <div id="fortune">大吉</div>
     <div id="message"></div>
@@ -169,46 +168,55 @@
     const initialSection = document.getElementById('initial-section');
     const omikujiSection = document.getElementById('omikuji-section');
     const resultSection = document.getElementById('result-section');
-    const previewContainer = document.getElementById('preview-container');
 
     const omikujiImage = document.getElementById('omikujiImage');
     const fortuneEl = document.getElementById('fortune');
     const messageEl = document.getElementById('message');
+    const previewContainer = document.getElementById('preview-container');
     const tweetButton = document.getElementById('tweetButton');
     const retryButton = document.getElementById('retryButton');
 
-    // 「。」のあとで改行する関数
+    // 「、」と「。」で改行を入れる
     function autoLineBreak(str) {
-      // 全角「。」のあとに改行を入れる
-      // 例: "今日は晴れ。明日は雨。" → "今日は晴れ。\n明日は雨。\n"
-      return str.replace(/。/g, "。\n");
+      // "、" → "、\n"
+      // "。" → "。\n"
+      let replaced = str;
+      replaced = replaced.replace(/、/g, "、\n");
+      replaced = replaced.replace(/。/g, "。\n");
+      return replaced;
     }
 
-      function autoLineBreak2(str) {
-      // 全角「、」のあとに改行を入れる
-      // 例: "今日は晴れ。明日は雨。" → "今日は晴れ。\n明日は雨。\n"
-      return str.replace(/、/g, "\n");
-    }
-
-    // 大吉メッセージ
-    const daikichiMessages = [
-      "助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも。（もちろん非課税）！",
-      "すべての不幸をこっそり解決する影武者がいて、あなたが経験する試練は成長のためのものだけかも。",
-      "かわいいは正義すぎて、あなたの笑顔だけで世界中の紛争が終結し、ノーベル平和賞かも！",
-      "実はあなたの不運が多すぎるバグだったらしく、運営が詫び幸運を配布してくれるかも…？",
-      "急に流行ったゲームで隠された才能が発覚し、世界があなたを求めて大騒ぎになるかも。",
-      "部屋を片付けるだけで開運が炸裂し、行く先々で奇跡が起こるかも。",
-      "SNSにアップした写真が史上最大のバズを記録し、億単位のオファーが殺到するかも！",
-      "食べるだけで周囲に幸せオーラを振りまく魔法の胃袋をゲット。何を食べても太らない！",
-      "仕事も恋愛も一気にうまくいき、周りから羨望のまなざしを浴びそう！",
-      "いつの間にか天才的なアイデアが降ってきて、新発明で一攫千金の予感。",
-      "人脈がいきなり広がって、世界中に友達ができるかも。新しい出会いが楽しみ！",
-      "なんとなくやっていた推し活が大成功し、推しから公式に感謝状をもらうかも。",
-      "SNSでつぶやいた一言が次世代の名言として歴史に刻まれるかも。",
-      "宝くじを買ったら全部当たるミラクル発生。もう働かなくても平気！？"
+    // 大吉メッセージ (全てそのまま、（）も含む)
+    const daikichiMessagesRaw = [
+`助けた人が石油王で、明日の朝起きたら銀行口座に300兆円が振り込まれているかも（もちろん非課税）！`,
+`全ての食べたものがゼロカロリーになり（しかも栄養失調にはならない）一生太らないかも！`,
+`実はすべての不幸をこっそり解決する影武者がいて、あなたに残る試練は成長のためのものだけかも！`,
+`あなたブームが実は来ていて、待ち人が35億人も押し寄せてくるかも（ただしみんな奥手）！`,
+`道端でくしゃみした拍子に次元の裂け目が開いてしまい、そこから富と幸運が湧き出てくるかも！`,
+`ご近所さんがこっそりあなただけに極秘の稼ぎ方を伝授してくれて、一生働かなくても平気になるかも！`,
+`急に流行ったゲームで隠されすぎた才能が発覚、世界の脚光を浴びるかも。`,
+`ただただ幸せになるかも。`,
+`今年は血液型占いと星座占いが全部一位かも。`,
+`なんと毎日”明日はもっといい日になる”かも。へけ。`, 
+`今年のブームが”自分”になることが確定するかも`,
+`なにも転生してないのに急になろう系主人公みたいな理不尽な幸福しか起きなくなるかも。`,
+`”全てを手に入れる”かも`,
+`朝起きたら、急に世界中の人々から「あなた最高！」と崇められる天才的スターになっているかも！`,
+`昔の自分から突然手紙が届き、そこに書いてある宝の地図が本物で人生逆転するかも！`,
+`新発売のお菓子に大当たり券が入っていて、一生分の豪華グルメを無料で楽しめちゃうかも！`,
+`かわいいは正義すぎて、あなたの笑顔だけで世界中の紛争が終結し、ノーベル平和賞を受賞するかも！`,
+`常に逆かえる化現象が発生してモテモテになる”ギフト”が授けられるかも！！`,
+`自分の出したゴミが全部、実は未来の超レアアイテムと判明し、タイムトラベラーに高額で買い取られるかも！`,
+`あなたの名前が入った曲が大ブレイクし、なぜか印税が毎年入ってきて不労所得でうはうはになるかも！`,
+`今年やった偉業で2040年の新札の顔になることが内定するかも！`,
+`宝くじに当たった生き別れの兄弟が「実は僕たち兄弟なんだ」って言いに来てくれるので、一生遊んで暮らせるかも！`,
+`ソファーでゴロゴロしていたら、どこかの大富豪が「そのリラックス術を学びたい」と大金を払ってくれるかも！`,
+`一瞬だけ集中しただけで“第八感”に目覚め、なんでも先回りして最強に効率的な人生を歩めるかも！`,
+`自宅の裏をちょっと掘ったら温泉が湧き出して、一気に温泉旅館オーナーになって大繁盛するかも！`,
+`実はあなたの不運がちょっと多すぎるバグが発覚し、運営から詑び幸運とこれからの人生の情報アップデートが提供されるかも。`
     ];
 
-    // 1) 箱をクリック → シェイク → 2秒後に結果
+    // おみくじを引く
     omikujiImage.addEventListener('click', () => {
       omikujiImage.classList.add('shakeLR');
       setTimeout(() => {
@@ -217,25 +225,26 @@
         omikujiImage.classList.remove('shakeLR');
       }, 1000);
 
-      // さらに2秒後(合計3秒後)に結果を表示
+      // 2秒後(合計3秒後)に結果
       setTimeout(async () => {
         omikujiSection.style.display = 'none';
         resultSection.style.display = 'block';
 
-        // ランダムにメッセージを選択し、「。」のあとで改行
-        fortuneEl.textContent = "大吉";
-        const idx = Math.floor(Math.random() * daikichiMessages.length);
-        const rawMsg = daikichiMessages[idx];
-        const formattedMsg2 = autoLineBreak(rawMsg);
-        const formattedMsg = autoLineBreak2(formattedMsg2);
-        messageEl.textContent = formattedMsg;
+        // メッセージを改行変換
+        const idx = Math.floor(Math.random() * daikichiMessagesRaw.length);
+        const raw = daikichiMessagesRaw[idx];
+        const replaced = autoLineBreak(raw);
 
-        // キャプチャして画像化
+        // Set
+        fortuneEl.textContent = "大吉";
+        messageEl.textContent = replaced;
+
+        // 画像化
         const captureArea = document.getElementById('capture-area');
         const canvas = await html2canvas(captureArea);
         const dataUrl = canvas.toDataURL("image/png");
 
-        // 画像だけを画面に表示
+        // プレビュー
         const newImg = document.createElement('img');
         newImg.src = dataUrl;
         previewContainer.innerHTML = "";
@@ -246,8 +255,12 @@
 
     // ツイート (テキストのみ)
     tweetButton.addEventListener('click', () => {
-      // 「大吉 + メッセージ + URL + ハッシュタグ」をツイート
-      const text = `【大吉】\n${messageEl.textContent}\n\nhttps://390juggler.github.io/daikichi/ #大吉くじ`;
+      // 大吉 + 改行したメッセージ + URL + #大吉くじ
+      const text = 
+`【大吉】
+${messageEl.textContent}
+
+https://390juggler.github.io/daikichi/ #大吉くじ`;
       const tweetUrl = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(text);
       window.open(tweetUrl, "_blank");
     });
@@ -256,7 +269,7 @@
     retryButton.addEventListener('click', () => {
       resultSection.style.display = 'none';
       initialSection.style.display = 'block';
-      previewContainer.innerHTML = ""; // 画像プレビューをクリア
+      previewContainer.innerHTML = "";
     });
   </script>
 </body>
